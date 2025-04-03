@@ -6,8 +6,6 @@
 #include <functional>
 // Need chrono for std::chrono::milliseconds
 #include <chrono>
-// Need limits for UINT16_MAX potentially if used for wakePin default
-// #include <limits>
 
 // --- Interface-specific Enums ---
 enum class IEventType {
@@ -18,13 +16,10 @@ enum class IEventType {
 enum class IInterruptMode {
     CHANGE,
     RISING,
-    FALLING,
-    // Add a NONE or INVALID state? Optional.
-    NONE // Useful default
+    FALLING
 };
 
 enum class ISleepMode {
-    // NONE, // Maybe remove NONE if ULTRA_LOW_POWER is the default?
     STOP,
     ULTRA_LOW_POWER,
     HIBERNATE
@@ -44,7 +39,7 @@ enum class INetworkInterfaceIndex {
 // But ensure the values map correctly if needed elsewhere.
 // For abstraction, just the enum names matter most.
 enum class IResetReason {
-    UNKNOWN = 0, // Combined NONE and UNKNOWN
+    UNKNOWN = 0,
     PIN_RESET = 20,
     POWER_MANAGEMENT = 30,
     POWER_DOWN = 40,
@@ -61,9 +56,8 @@ enum class IResetReason {
     CONFIG_UPDATE = 150
 };
 
-// Added NONE state
 enum class IWakeupReason: uint16_t{
-    UNKNOWN = 0, // Using 0 for UNKNOWN/NONE often makes sense
+    UNKNOWN = 0,
     BY_GPIO = 1,
     BY_ADC = 2,
     BY_DAC = 3,
@@ -92,7 +86,7 @@ struct ISleepConfig {
     std::chrono::milliseconds duration {0}; // Default to no duration (pin/event wake only)
     // Use standard uint16_t for pin number. Define Pins::Clock_INT elsewhere using standard types.
     uint16_t wakePin = 0xFFFF; // Use an invalid value like max uint16_t or a specific constant
-    IInterruptMode wakePinMode = IInterruptMode::NONE; // Default to no pin wake mode
+    IInterruptMode wakePinMode = IInterruptMode::FALLING; // Default to falling
     INetworkInterfaceIndex network = INetworkInterfaceIndex::NONE; // Default network off
     // Add other flags if needed, e.g., bool waitForCloud = false;
 };
@@ -106,6 +100,7 @@ class ISystem {
     virtual void on(IEventType event, SystemEventHandler handler) = 0;
     virtual IResetReason resetReason() = 0;
     virtual uint32_t freeMemory() = 0;
+    virtual bool waitForCondition(std::function<bool()> condition, std::chrono::milliseconds timeout) = 0;
 
     /**
      * @brief Puts the system to sleep using configuration and returns the wake reason.
