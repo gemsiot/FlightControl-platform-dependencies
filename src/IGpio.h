@@ -19,6 +19,11 @@
    OUTPUT = 1
  };
 
+ enum class ILevel: uint8_t {
+    LOW = 0,
+    HIGH = 1
+ };
+
  /**
   * @brief Abstract interface for GPIO functions
   *
